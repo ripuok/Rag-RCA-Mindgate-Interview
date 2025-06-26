@@ -32,7 +32,7 @@ jobs:
       - name: Determine Environment
         id: set_env
         run: |
-          if [[ "${{ github.ref_name }}" == "RAG" ]]; then
+          if [[ "${{ github.ref_name }}" == "master" ]]; then
             echo "ENVIRONMENT=staging" >> $GITHUB_ENV
             echo "SERVER_IP=${{ secrets.STAGING_SERVER_IP }}" >> $GITHUB_ENV
             echo "SERVER_USER=${{ secrets.STAGING_SERVER_USER }}" >> $GITHUB_ENV
