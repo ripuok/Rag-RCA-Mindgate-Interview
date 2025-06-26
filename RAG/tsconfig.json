@@ -1,10 +1,18 @@
 {
 	"compilerOptions": {
-		"target": "es2016",
-		"module": "commonjs",
+		"target": "es2020", // modern JS output
+		"module": "commonjs", // required for Node.js
+		"moduleResolution": "node", // ensures proper Node-style resolution
+		"outDir": "dist", // compiled JS goes here
+		"rootDir": "src", // your TS code lives here
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"strict": true,
-		"skipLibCheck": true
-	}
+		"skipLibCheck": true,
+		"resolveJsonModule": true, // allows importing JSON files
+		"noImplicitAny": true, // catch implicit `any`s
+		"types": ["node"] // includes Node.js types
+	},
+	"include": ["src"],
+	"exclude": ["node_modules", "dist"]
 }

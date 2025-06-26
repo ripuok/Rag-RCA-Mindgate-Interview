@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  mcp:
+    build: .
+    ports:
+      - "3111:3111"
+    restart: unless-stopped

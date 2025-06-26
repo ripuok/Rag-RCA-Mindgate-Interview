@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request } from "express";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
@@ -35,7 +35,7 @@ const router = express.Router();
  *                   type: string
  */
 const storage = multer.diskStorage({
-	destination: (req, file, cb) => {
+	destination: (req: Request, file: Express.Multer.File, cb) => {
 		const uploadDir = path.join(process.cwd(), "uploads");
 		if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 		cb(null, uploadDir);
@@ -48,7 +48,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Route with file upload
-router.post("/", upload.single("logfile"), async (req, res) => {
+router.post("/", upload.single("logfile"), async (req: Request, res) => {
 	try {
 		const rca = await generateRCA(); // You can pass transactionId or path if needed
 		res.json({ rca });

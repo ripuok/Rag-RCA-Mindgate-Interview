@@ -1,0 +1,206 @@
+name: Deploy to Staging and Live with esbuild and Obfuscation
+
+on:
+  push:
+    branches:
+      - Rag-RCA-Mindgate-Interview
+
+env:
+  DEPLOY_PATH: "/home/ripuok/${{ secrets.PROJECT_NAME }}"
+  FRONTEND_PATH: "/home/ripuok/${{ secrets.PROJECT_NAME }}/video-gen-frontend/dist"
+  BACKEND_PATH: "/home/ripuok/${{ secrets.PROJECT_NAME }}/RAG/dist"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }} # This gives write access
+
+      - name: Cache Node.js modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm-store
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Determine Environment
+        id: set_env
+        run: |
+          if [[ "${{ github.ref_name }}" == "RAG" ]]; then
+            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            echo "SERVER_IP=${{ secrets.STAGING_SERVER_IP }}" >> $GITHUB_ENV
+            echo "SERVER_USER=${{ secrets.STAGING_SERVER_USER }}" >> $GITHUB_ENV
+
+            echo "SSH_KEY<<EOF" >> $GITHUB_ENV
+            echo "${{ secrets.STAGING_SSH_PRIVATE_KEY }}" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+           
+            echo "TAG_PREFIX=staging-" >> $GITHUB_ENV
+          elif [[ "${{ github.ref_name }}" == "live" ]]; then
+            echo "ENVIRONMENT=live" >> $GITHUB_ENV
+            echo "SERVER_IP=${{ secrets.LIVE_SERVER_IP }}" >> $GITHUB_ENV
+            echo "SERVER_USER=${{ secrets.LIVE_SERVER_USER }}" >> $GITHUB_ENV
+                        
+            echo "SSH_KEY<<EOF" >> $GITHUB_ENV
+            echo "${{ secrets.LIVE_SSH_PRIVATE_KEY }}" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+            echo "TAG_PREFIX=release-" >> $GITHUB_ENV
+          else
+            echo "This workflow is not intended to run on this branch."
+            exit 1
+          fi
+
+      #   - name: Install pnpm
+      #     run: npm install -g pnpm
+
+      - name: Install dependencies using pnpm
+        run: |
+          cd ./RAG && npm i && npm run build
+      #       cd frontend && pnpm i
+      #   - name: Build Frontend & Obfuscate
+      #     run: |
+      #       cd frontend
+      #       pnpm run build
+      #   npx javascript-obfuscator dist --output dist --compact true --control-flow-flattening true
+      #   - name: Build Backend
+      #     run: |
+      #       npm run build
+      #   cd backend-ripu
+      #   npx esbuild src/index.ts --bundle --platform=node --target=node18 --outdir=dist
+
+      - name: Create new tag
+        run: |
+          LAST_TAG=$(git tag --list "${{ env.TAG_PREFIX }}*" --sort=-v:refname | head -n 1)
+          NEW_TAG="${{ env.TAG_PREFIX }}${{ github.run_number }}"
+          echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+          git tag $NEW_TAG
+          # git push origin $NEW_TAG
+        env:
+          TAG_PREFIX: ${{ env.TAG_PREFIX }}
+
+      # delete deploy folder
+      - name: 🔥 Clean up old deploy folder
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_IP }}
+          username: ${{ env.SERVER_USER }}
+          key: ${{ env.SSH_KEY }}
+          script: |
+            if [ -d "${{ env.DEPLOY_PATH }}" ]; then
+              rm -rf "${{ env.DEPLOY_PATH }}"
+              echo "✅ Deleted old deploy folder at ${{ env.DEPLOY_PATH }}"
+            fi
+            mkdir -p "${{ env.DEPLOY_PATH }}"
+        env:
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+          SERVER_IP: ${{ env.SERVER_IP }}
+          SERVER_USER: ${{ env.SERVER_USER }}
+          SSH_KEY: ${{ env.SSH_KEY }}
+
+      #   - name: Remove node_modules before deploy
+      #     run: |
+      #       rm -rf RAG/node_modules
+
+      - name: Deploy dist folders and .env.gpg
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.SERVER_IP }}
+          username: ${{ env.SERVER_USER }}
+          key: "${{ env.SSH_KEY }}"
+          source: "RAG/dist/,RAG/package-lock.json,RAG/package.json,RAG/Dockerfile,RAG/.env.gpg,RAG/.env,docker-compose.yml"
+          target: "${{ env.DEPLOY_PATH }}"
+          #   source: "RAG/dist/,RAG/.env.gpg,video-gen-frontend/dist/,video-gen-frontend/.env.gpg,docker-compose.yml"
+          # source: "htpasswd/,frontend/dist/,backend-ripu/openapi_v3.json,backend-ripu/dist/,backend-ripu/package.json,backend-ripu/package-lock.json,frontend/.env.gpg,backend-ripu/.env.gpg,frontend/Dockerfile,backend-ripu/Dockerfile,docker-compose.yml"
+          # strip_components: 1
+        env:
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+          SERVER_IP: ${{ env.SERVER_IP }}
+          SERVER_USER: ${{ env.SERVER_USER }}
+          SSH_KEY: ${{ env.SSH_KEY }}
+
+      - name: Decrypt envs and Restart PM2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_IP }}
+          username: ${{ env.SERVER_USER }}
+          key: ${{ env.SSH_KEY }}
+          script: |
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Decrypt frontend env
+            # if [ -f frontend/.env.gpg ]; then
+            #   gpg --batch --yes --decrypt --passphrase "${{ env.GPG_PASSPHRASE }}" --output frontend/.env frontend/.env.gpg
+            #   cp frontend/.env frontend/dist/.env
+            #   echo "  front end env  "
+            # fi
+
+            # Decrypt backend env
+            if [ -f RAG/.env.gpg ]; then
+              gpg --batch --yes --decrypt --passphrase "${{ env.GPG_PASSPHRASE }}" --output RAG/.env RAG/.env.gpg
+              cp RAG/.env RAG/dist/.env
+              echo "  back end env  "
+            fi
+
+
+            #pm2 stop all || true
+            #pm2 delete all || true
+
+
+            # Rebuild and restart containers and add env
+            docker compose -f docker-compose.yml up --build -d 
+             
+            # cd frontend
+            # pm2 restart frontend-${{ secrets.PROJECT_NAME }} --update-env || pm2 serve dist 4000 --spa --name frontend-${{ secrets.PROJECT_NAME }}
+
+            # cd ../RAG            
+            # pm2 restart RAG-${{ secrets.PROJECT_NAME }} --update-env || pm2 start dist/index.js --name RAG-${{ secrets.PROJECT_NAME }}
+
+            cd ${{ env.DEPLOY_PATH }}
+            [ -f RAG/.env ] && shred -u RAG/.env
+            [ -f RAG/dist/.env ] && shred -u RAG/dist/.env
+            [ -f RAG/.env.gpg ] && shred -u RAG/.env.gpg
+            [ -d RAG ] && rm -rf RAG/
+
+            [ -f docker-compose.yml ] && shred -u docker-compose.yml
+
+            # [ -f frontend/.env ] && shred -u frontend/.env
+            # [ -f frontend/.env.gpg ] && shred -u frontend/.env.gpg
+            # [ -f frontend/dist/.env ] && shred -u frontend/dist/.env
+            # [ -d frontend ] && rm -rf frontend/
+
+        env:
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+          SERVER_IP: ${{ env.SERVER_IP }}
+          SERVER_USER: ${{ env.SERVER_USER }}
+          SSH_KEY: ${{ env.SSH_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Rollback on Failure
+        if: failure()
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_IP }}
+          username: ${{ env.SERVER_USER }}
+          key: ${{ env.SSH_KEY }}
+          script: |
+            echo "Rolling back to $LAST_TAG"
+
+            cd ${{ env.DEPLOY_PATH }} && git reset --hard $LAST_TAG
+
+            cd ${{ env.BACKEND_PATH }}
+            pm2 restart backend-ripu-${{ secrets.PROJECT_NAME }}
+
+            # cd ${{ env.FRONTEND_PATH }}
+            # pm2 restart frontend-${{ secrets.PROJECT_NAME }}
+        env:
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+          SERVER_IP: ${{ env.SERVER_IP }}
+          SERVER_USER: ${{ env.SERVER_USER }}
+          SSH_KEY: ${{ env.SSH_KEY }}
