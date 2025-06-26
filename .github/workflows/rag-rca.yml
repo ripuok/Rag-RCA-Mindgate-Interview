@@ -163,12 +163,12 @@ jobs:
             # pm2 restart RAG-${{ secrets.PROJECT_NAME }} --update-env || pm2 start dist/index.js --name RAG-${{ secrets.PROJECT_NAME }}
 
             cd ${{ env.DEPLOY_PATH }}
-            [ -f RAG/.env ] && shred -u RAG/.env
-            [ -f RAG/dist/.env ] && shred -u RAG/dist/.env
-            [ -f RAG/.env.gpg ] && shred -u RAG/.env.gpg
-            [ -d RAG ] && rm -rf RAG/
+            # [ -f RAG/.env ] && shred -u RAG/.env
+            # [ -f RAG/dist/.env ] && shred -u RAG/dist/.env
+            # [ -f RAG/.env.gpg ] && shred -u RAG/.env.gpg
+            # [ -d RAG ] && rm -rf RAG/
 
-            [ -f docker-compose.yml ] && shred -u docker-compose.yml
+            # [ -f docker-compose.yml ] && shred -u docker-compose.yml
 
             # [ -f frontend/.env ] && shred -u frontend/.env
             # [ -f frontend/.env.gpg ] && shred -u frontend/.env.gpg
