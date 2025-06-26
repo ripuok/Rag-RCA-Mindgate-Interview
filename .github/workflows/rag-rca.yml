@@ -3,7 +3,7 @@ name: Deploy to Staging and Live with esbuild and Obfuscation
 on:
   push:
     branches:
-      - Rag-RCA-Mindgate-Interview
+      - master
 
 env:
   DEPLOY_PATH: "/home/ripuok/${{ secrets.PROJECT_NAME }}"
