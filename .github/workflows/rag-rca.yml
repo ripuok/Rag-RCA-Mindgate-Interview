@@ -61,7 +61,9 @@ jobs:
 
       - name: Install dependencies using pnpm
         run: |
-          cd ./RAG && npm i && npm install --save-dev typescript && npm run build
+          cd ./RAG && npm ci && npm run build
+
+      #cd ./RAG && npm i && npm install --save-dev typescript && npm run build
       #       cd frontend && pnpm i
       #   - name: Build Frontend & Obfuscate
       #     run: |
