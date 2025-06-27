@@ -1,6 +1,7 @@
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { Express } from "express";
+import path from "path";
 
 const options: swaggerJSDoc.Options = {
 	definition: {
@@ -11,7 +12,9 @@ const options: swaggerJSDoc.Options = {
 			description: "API for generating Root Cause Analysis reports",
 		},
 	},
-	apis: ["./routes/*.ts"], // Adjust path if needed
+	  apis: [path.resolve(__dirname, "./routes/*.js")], // <-- Adjust this
+
+	// apis: ["./routes/*.ts"], // Adjust path if needed
 };
 
 const swaggerSpec = swaggerJSDoc(options);
