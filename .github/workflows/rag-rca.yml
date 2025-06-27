@@ -59,9 +59,9 @@ jobs:
       #   - name: Install pnpm
       #     run: npm install -g pnpm
 
-      - name: Install dependencies using pnpm
-        run: |
-          cd ./RAG && npm i && npm run build
+      # - name: Install dependencies using pnpm
+      #   run: |
+      #     cd ./RAG && npm i && npm run build
 
       #cd ./RAG && npm i && npm install --save-dev typescript && npm run build
       #       cd frontend && pnpm i
