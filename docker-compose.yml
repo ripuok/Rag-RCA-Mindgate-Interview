@@ -1,10 +1,11 @@
-version: "3.9"
-
 services:
   mcp:
     build:
-      context: ./Rag
+      context: ./RAG
       dockerfile: Dockerfile
     ports:
       - "3111:3111"
+    volumes:
+      - ./uploads:/app/uploads # mount uploads folder
+      - ./transaction.log:/app/transaction.log # mount transaction log file
     restart: unless-stopped
