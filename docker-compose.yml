@@ -1,7 +1,10 @@
 version: "3.9"
+
 services:
   mcp:
-    build: .
+    build:
+      context: ./Rag
+      dockerfile: Dockerfile
     ports:
       - "3111:3111"
     restart: unless-stopped
