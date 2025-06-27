@@ -16,7 +16,7 @@ const options = {
             description: "API for generating Root Cause Analysis reports",
         },
     },
-    apis: [path_1.default.resolve(__dirname, "./routes/*.ts")], // <-- Adjust this
+    apis: [path_1.default.resolve(__dirname, "./routes/*.js")], // <-- Adjust this
     // apis: ["./routes/*.ts"], // Adjust path if needed
 };
 const swaggerSpec = (0, swagger_jsdoc_1.default)(options);
