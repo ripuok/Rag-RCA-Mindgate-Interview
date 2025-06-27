@@ -38,22 +38,65 @@ export const generateRCA = async () => {
 
 	const context = relevantDocs.join("\n") || "No relevant documentation found.";
 
-	const prompt = `
-You are a financial system analyst. 
-Based on the following transaction details and relevant context, 
-generate a Root Cause Analysis (RCA).
+// 	const prompt = `
+// You are a financial system analyst. 
+// Based on the following transaction details and relevant context, 
+// generate a Root Cause Analysis (RCA).
 
-Transaction Info:
+// Transaction Info:
+// ${failedTransactions}
+
+// Relevant Knowledge:
+// ${context}
+// `;
+const prompt = `
+You are a financial system analyst. Your task is to generate a structured Root Cause Analysis (RCA) 
+strictly based on the given transaction logs and contextual knowledge base.
+
+Do not fabricate reasons or actions — use only the provided data.
+
+---
+
+### Format:
+For each transaction, follow this exact format:
+
+#### TransactionID: <transaction_id>
+
+**Details:**
+- Timestamp: <timestamp>
+- Channel: <channel>
+- Status: <status>
+- Failure Reason: <reason>
+- Component: <component>
+- FinalStatus: <final status>
+
+**Root Cause:**
+<Short, precise root cause based on context and log>
+
+**Corrective Actions:**
+1. <Action 1>
+2. <Action 2>
+3. <...>
+
+---
+
+### Transaction Info:
 ${failedTransactions}
 
-Relevant Knowledge:
+---
+
+### Relevant Knowledge Base:
 ${context}
 `;
 
+console.log(JSON.stringify(prompt));
+
 	const response = await openai.chat.completions.create({
-		model: "gpt-4",
+		model: "mistralai/mistral-small-3.2-24b-instruct:free",
 		messages: [
-			{ role: "system", content: "You are a payments RCA expert." },
+			{ role: "system", content: "You are a strict RCA generator. Output only structured RCA reports. No assumptions." },
+
+			// { role: "system", content: "You are a payments RCA expert." },
 			{ role: "user", content: prompt },
 		],
 	});

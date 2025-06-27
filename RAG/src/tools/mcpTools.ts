@@ -1,15 +1,13 @@
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
-import readline from "readline";
 
 export const getFailedTransactionsTool = {
 	name: "get-failed-transactions",
-	description:
-		"Return all raw JSON lines of failed transactions from transaction.log",
+	description: "Return full plain text contents of transaction.log",
 	inputSchema: z.object({}),
 	handler: async () => {
-		const logFilePath = path.join(process.cwd(), "../uploads/transaction.log");
+		const logFilePath = path.join(process.cwd(), "uploads/transaction.log");
 
 		if (!fs.existsSync(logFilePath)) {
 			return {
@@ -17,35 +15,25 @@ export const getFailedTransactionsTool = {
 			};
 		}
 
-		const fileStream = fs.createReadStream(logFilePath);
-		const rl = readline.createInterface({
-			input: fileStream,
-			crlfDelay: Infinity,
-		});
-
-		const failedRawLogs: string[] = [];
-
-		for await (const line of rl) {
-			try {
-				const tx = JSON.parse(line);
-				if (tx.status?.toLowerCase() === "failed") {
-					failedRawLogs.push(line); // use raw original line
-				}
-			} catch {
-				continue;
-			}
+		try {
+			const rawText = fs.readFileSync(logFilePath, "utf-8");
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Full transaction.log contents:\n\n${rawText}`,
+					},
+				],
+			};
+		} catch (err: any) {
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Error reading log file: ${err.message}`,
+					},
+				],
+			};
 		}
-
-		return {
-			content: [
-				{
-					type: "text",
-					text:
-						failedRawLogs.length > 0
-							? `Raw Failed Transactions:\n\n${failedRawLogs.join("\n")}`
-							: "No failed transactions found.",
-				},
-			],
-		};
 	},
 };
