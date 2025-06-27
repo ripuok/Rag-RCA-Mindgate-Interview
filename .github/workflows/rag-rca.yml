@@ -114,8 +114,8 @@ jobs:
           host: ${{ env.SERVER_IP }}
           username: ${{ env.SERVER_USER }}
           key: "${{ env.SSH_KEY }}"
-          source: "/"
-          # source: "RAG/dist/,RAG/package-lock.json,RAG/package.json,RAG/Dockerfile,RAG/.env.gpg,RAG/.env,docker-compose.yml"
+          # source: "/"
+          source: "RAG/dist/,RAG/package-lock.json,RAG/package.json,RAG/Dockerfile,RAG/.env.gpg,RAG/.env,docker-compose.yml"
           target: "${{ env.DEPLOY_PATH }}"
           #   source: "RAG/dist/,RAG/.env.gpg,video-gen-frontend/dist/,video-gen-frontend/.env.gpg,docker-compose.yml"
           # source: "htpasswd/,frontend/dist/,backend-ripu/openapi_v3.json,backend-ripu/dist/,backend-ripu/package.json,backend-ripu/package-lock.json,frontend/.env.gpg,backend-ripu/.env.gpg,frontend/Dockerfile,backend-ripu/Dockerfile,docker-compose.yml"
