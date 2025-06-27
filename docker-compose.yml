@@ -6,6 +6,5 @@ services:
     ports:
       - "3111:3111"
     volumes:
-      - ./uploads:/app/uploads # mount uploads folder
-      - ./transaction.log:/app/transaction.log # mount transaction log file
+      - ./uploads:/app/uploads
     restart: unless-stopped
