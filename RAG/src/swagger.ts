@@ -12,7 +12,7 @@ const options: swaggerJSDoc.Options = {
 			description: "API for generating Root Cause Analysis reports",
 		},
 	},
-	  apis: [path.resolve(__dirname, "./routes/*.js")], // <-- Adjust this
+	  apis: [path.resolve(__dirname, "./routes/*.ts")], // <-- Adjust this
 
 	// apis: ["./routes/*.ts"], // Adjust path if needed
 };

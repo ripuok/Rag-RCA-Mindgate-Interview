@@ -57,10 +57,10 @@ const storage = multer_1.default.diskStorage({
 const upload = (0, multer_1.default)({ storage });
 router.post("/", upload.single("logfile"), async (req, res) => {
     try {
-        if (!req.file) {
-            res.status(400).json({ error: "No file uploaded" });
-            return;
-        }
+        //if (!req.file) {
+        // res.status(400).json({ error: "No file uploaded" });
+        // return;
+        //}
         // const filePath = req.file.path;
         // You could pass filePath if needed
         const rca = await (0, rcaService_1.generateRCA)();
