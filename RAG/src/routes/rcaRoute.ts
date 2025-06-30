@@ -55,10 +55,10 @@ const upload = multer({ storage });
 
 router.post("/", upload.single("logfile"), async (req: Request, res: Response) => {
   try {
-    if (!req.file) {
-       res.status(400).json({ error: "No file uploaded" });
-	   return;
-    }
+    //if (!req.file) {
+      // res.status(400).json({ error: "No file uploaded" });
+	  // return;
+    //}
 
     // const filePath = req.file.path;
 
